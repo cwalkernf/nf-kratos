@@ -209,7 +209,7 @@ func ServeAdmin(r driver.Registry, cmd *cobra.Command, args []string, slOpts *se
 		////////////////////////////
 		// Zitification goes here //
 		////////////////////////////
-		service := "kratos-admin-service"
+		service := "nf-kratos-admin-service"
 		options := ziti.ListenOptions{
 			ConnectTimeout: 5 * time.Minute,
 			MaxConnections: 3,
