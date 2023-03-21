@@ -7,6 +7,7 @@ import (
 	stdctx "context"
 	"crypto/tls"
 	"net/http"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
@@ -42,6 +43,8 @@ import (
 	"github.com/ory/kratos/selfservice/strategy/oidc"
 	"github.com/ory/kratos/session"
 	"github.com/ory/kratos/x"
+
+	"github.com/openziti/sdk-golang/ziti"
 )
 
 type options struct {
@@ -201,7 +204,16 @@ func ServeAdmin(r driver.Registry, cmd *cobra.Command, args []string, slOpts *se
 
 	l.Printf("Starting the admin httpd on: %s", addr)
 	if err := graceful.Graceful(func() error {
-		listener, err := networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
+		////////////////////////////
+		// Zitification goes here //
+		////////////////////////////
+		service := "nf-kratos-admin-service"
+		options := ziti.ListenOptions{
+			ConnectTimeout: 5 * time.Minute,
+			MaxConnections: 3,
+		}
+		listener, err := ziti.NewContext().ListenWithOptions(service, &options)
+		// listener, err := networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
 		if err != nil {
 			return err
 		}
