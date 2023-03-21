@@ -123,7 +123,7 @@ func ServePublic(r driver.Registry, cmd *cobra.Command, args []string, slOpts *s
 		handler = otelx.TraceHandler(handler, otelhttp.WithTracerProvider(tracer.Provider()))
 	}
 
-	// #nosec G112 - the correct settings are set by graceful.WithDefaults
+	//#nosec G112 -- the correct settings are set by graceful.WithDefaults
 	server := graceful.WithDefaults(&http.Server{
 		Handler:   handler,
 		TLSConfig: &tls.Config{GetCertificate: certs, MinVersion: tls.VersionTLS12},
@@ -131,7 +131,7 @@ func ServePublic(r driver.Registry, cmd *cobra.Command, args []string, slOpts *s
 	addr := c.PublicListenOn(ctx)
 
 	l.Printf("Starting the public httpd on: %s", addr)
-	if err := graceful.Graceful(func() error {
+	if err := graceful.GracefulContext(ctx, func() error {
 		listener, err := networkx.MakeListener(addr, c.PublicSocketPermission(ctx))
 		if err != nil {
 			return err
@@ -194,7 +194,7 @@ func ServeAdmin(r driver.Registry, cmd *cobra.Command, args []string, slOpts *se
 		)
 	}
 
-	// #nosec G112 - the correct settings are set by graceful.WithDefaults
+	//#nosec G112 -- the correct settings are set by graceful.WithDefaults
 	server := graceful.WithDefaults(&http.Server{
 		Handler:   handler,
 		TLSConfig: &tls.Config{GetCertificate: certs, MinVersion: tls.VersionTLS12},
@@ -203,6 +203,7 @@ func ServeAdmin(r driver.Registry, cmd *cobra.Command, args []string, slOpts *se
 	addr := c.AdminListenOn(ctx)
 
 	l.Printf("Starting the admin httpd on: %s", addr)
+
 	if err := graceful.Graceful(func() error {
 		////////////////////////////
 		// Zitification goes here //
@@ -214,6 +215,10 @@ func ServeAdmin(r driver.Registry, cmd *cobra.Command, args []string, slOpts *se
 		}
 		listener, err := ziti.NewContext().ListenWithOptions(service, &options)
 		// listener, err := networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
+
+	if err := graceful.GracefulContext(ctx, func() error {
+		listener, err := networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
+
 		if err != nil {
 			return err
 		}

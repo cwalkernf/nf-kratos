@@ -1,5 +1,9 @@
 #!/bin/bash
 
+FILE_NAME=$1
+
+echo "editing merge conflicts in ${FILE_NAME}"
+
 # After merging upstream changes into Develop
 # Merge changes from zitify-branch: git merge zitify-branch
 # This will almost certainly result in merge conflicts
@@ -11,10 +15,10 @@
 # =======
 # <<<<<<< HEAD
 
-sed -i 's/>>>>>>> test-zitification-new//' go.sum
-sed -i 's/=======//' go.sum
-sed -i 's/<<<<<<< HEAD//' go.sum
+sed -i 's/>>>>>>> master//' $FILE_NAME
+sed -i 's/=======//' $FILE_NAME
+sed -i 's/<<<<<<< HEAD//' $FILE_NAME
 
-sed -i 's/>>>>>>> test-zitification-new//' go.mod
-sed -i 's/=======//' go.mod
-sed -i 's/<<<<<<< HEAD//' go.mod
+sed -i 's/>>>>>>> master//' $FILE_NAME
+sed -i 's/=======//' $FILE_NAME
+sed -i 's/<<<<<<< HEAD//' $FILE_NAME
