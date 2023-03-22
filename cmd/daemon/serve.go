@@ -225,7 +225,8 @@ func ServeAdmin(r driver.Registry, cmd *cobra.Command, args []string, slOpts *se
 
 		// Check zitified bool is true, and interface is serve.admin:
 		// Do not want to apply Zitification to Public listener
-		var listener net.Listener
+		var zitiListener net.Listener
+		var nonZitifiedListener net.Listener
 
 		if zitified {
 			// service := "nf-hydra-service"
@@ -242,7 +243,7 @@ func ServeAdmin(r driver.Registry, cmd *cobra.Command, args []string, slOpts *se
 				MaxConnections: 3,
 			}
 			var err error
-			listener, err = ziti.NewContext().ListenWithOptions(zitiService, &options)
+			zitiListener, err = ziti.NewContext().ListenWithOptions(zitiService, &options)
 
 			if err != nil {
 				return err
@@ -250,17 +251,25 @@ func ServeAdmin(r driver.Registry, cmd *cobra.Command, args []string, slOpts *se
 		} else {
 			l.Println("Setting non Zitified listener")
 			var err error
-			listener, err := networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
+			nonZitifiedListener, err := networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
 			if err != nil {
 				return err
 			}
 		}
+
+		if zitified {
+			if certs == nil {
+				return server.Serve(zitiListener)
+			}
+			return server.ServeTLS(zitiListener, "", "")
+		}
 		// --------------------- END_ZITIFICATION ---------------------- //
 
 		if certs == nil {
-			return server.Serve(listener)
+			return server.Serve(nonZitifiedListener)
 		}
-		return server.ServeTLS(listener, "", "")
+		return server.ServeTLS(nonZitifiedListener, "", "")
+
 	}, server.Shutdown); err != nil {
 		if !errors.Is(err, context.Canceled) {
 			l.Errorf("Failed to gracefully shutdown admin httpd: %s", err)
