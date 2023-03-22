@@ -251,7 +251,7 @@ func ServeAdmin(r driver.Registry, cmd *cobra.Command, args []string, slOpts *se
 		} else {
 			l.Println("Setting non Zitified listener")
 			var err error
-			nonZitifiedListener, err := networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
+			nonZitifiedListener, err = networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
 			if err != nil {
 				return err
 			}
