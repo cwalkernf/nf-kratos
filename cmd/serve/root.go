@@ -54,6 +54,8 @@ DON'T DO THIS IN PRODUCTION!
 	serveCmd.PersistentFlags().Bool("sqa-opt-out", false, "Disable anonymized telemetry reports - for more information please visit https://www.ory.sh/docs/ecosystem/sqa")
 	serveCmd.PersistentFlags().Bool("dev", false, "Disables critical security features to make development easier")
 	serveCmd.PersistentFlags().Bool("watch-courier", false, "Run the message courier as a background task, to simplify single-instance setup")
+	// CSW - Add new flag to enable Zitified admin listener
+	serveCmd.PersistentFlags().Bool("zitified", false, "This will start the admin listener using a zitified connection. Requires 'serviceName', and 'jsonFile' to work")
 	return serveCmd
 }
 

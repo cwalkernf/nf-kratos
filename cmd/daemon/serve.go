@@ -6,7 +6,9 @@ package daemon
 import (
 	stdctx "context"
 	"crypto/tls"
+	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
@@ -204,24 +206,56 @@ func ServeAdmin(r driver.Registry, cmd *cobra.Command, args []string, slOpts *se
 
 	l.Printf("Starting the admin httpd on: %s", addr)
 
-	if err := graceful.Graceful(func() error {
+	if err := graceful.GracefulContext(ctx, func() error {
 		////////////////////////////
 		// Zitification goes here //
 		////////////////////////////
-		service := "nf-kratos-admin-service"
-		options := ziti.ListenOptions{
-			ConnectTimeout: 5 * time.Minute,
-			MaxConnections: 3,
-		}
-		listener, err := ziti.NewContext().ListenWithOptions(service, &options)
+		// service := "nf-kratos-admin-service"
+		// options := ziti.ListenOptions{
+		// 	ConnectTimeout: 5 * time.Minute,
+		// 	MaxConnections: 3,
+		// }
+		// listener, err := ziti.NewContext().ListenWithOptions(service, &options)
 		// listener, err := networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
+		// --------------------- BEGIN_ZITIFICATION ---------------------- //
+		//
+		// -> First, check for "zitified" Bool parameter
+		zitified, _ := cmd.Flags().GetBool("zitified")
+		l.Printf("Zitified cmd input: %v", zitified)
 
-	if err := graceful.GracefulContext(ctx, func() error {
-		listener, err := networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
+		// Check zitified bool is true, and interface is serve.admin:
+		// Do not want to apply Zitification to Public listener
+		var listener net.Listener
 
-		if err != nil {
-			return err
+		if zitified {
+			// service := "nf-hydra-service"
+			// zitiService := d.Config().ZITI_SERVICE()
+			zitiService := os.Getenv("ZITI_SERVICE")
+
+			if zitiService == "" {
+				return errors.New("Zitified flag set, but ZITI_SERVICE environment variable not found")
+			}
+
+			l.Println("Setting up Zitified listener on %s", zitiService)
+			options := ziti.ListenOptions{
+				ConnectTimeout: 5 * time.Minute,
+				MaxConnections: 3,
+			}
+			var err error
+			listener, err = ziti.NewContext().ListenWithOptions(zitiService, &options)
+
+			if err != nil {
+				return err
+			}
+		} else {
+			l.Println("Setting non Zitified listener")
+			var err error
+			listener, err := networkx.MakeListener(addr, c.AdminSocketPermission(ctx))
+			if err != nil {
+				return err
+			}
 		}
+		// --------------------- END_ZITIFICATION ---------------------- //
 
 		if certs == nil {
 			return server.Serve(listener)
